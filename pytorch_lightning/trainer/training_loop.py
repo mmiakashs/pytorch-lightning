@@ -479,7 +479,7 @@ class TrainerTrainLoopMixin(ABC):
                 checkpoint_accumulator.accumulate(step_out['checkpoint_on'])
 
             if self.is_overridden('training_epoch_end', model=self.get_model()) or should_auto_reduce_train_result:
-                epoch_output.append(batch_output.training_step_output_for_epoch_end)
+                epoch_output += batch_output.training_step_output_for_epoch_end
 
             # update LR schedulers
             self.update_train_loop_lr_schedulers()
@@ -668,6 +668,9 @@ class TrainerTrainLoopMixin(ABC):
         # track metrics to log
         batch_log_metrics = []
 
+        # track all training_step output for epoch_end
+        training_step_output_for_epoch_end_list = []
+
         using_results_obj = False
 
         if batch is None:
@@ -719,6 +722,7 @@ class TrainerTrainLoopMixin(ABC):
                 # POST forward bookkeeping
                 # ------------------------------
                 batch_callback_metrics.append(opt_closure_result.training_step_output.callback_metrics)
+                training_step_output_for_epoch_end_list.append(opt_closure_result.training_step_output_for_epoch_end)
 
                 # add metrics to loggers
                 if using_results_obj:
@@ -780,7 +784,7 @@ class TrainerTrainLoopMixin(ABC):
             signal=0,
             grad_norm_dic=grad_norm_dic,
             batch_log_metrics=batch_log_metrics,
-            training_step_output_for_epoch_end=opt_closure_result.training_step_output_for_epoch_end
+            training_step_output_for_epoch_end=training_step_output_for_epoch_end_list
         )
         return result
 
